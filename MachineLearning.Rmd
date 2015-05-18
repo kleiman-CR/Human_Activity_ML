@@ -3,17 +3,20 @@ title: ' Construction of a machine learning algorithm to predict activity qualit
   from activity monitors'
 author: "iair kleiman"
 date: "May 17, 2015"
-output: pdf_document
+output:
+  html_document:
+    keep_md: yes
+  pdf_document: default
 ---
 
 ### Summary
 
-The objective of this work is to be able to make a good classifier algorithm to predict how good the exercise was performed.  We perfomed the Data Cleaing, Validation, will run several Machine learning algorithms. We did a cross validation of the data and found out that the best model for this dataset was a Random Forest.
+The objective of this work is to be able to make a good classifier algorithm to predict how good the exercise was performed.  We performed the Data Cleaning, Validation, will run several Machine learning algorithms. We did a cross validation of the data and found out that the best model for this data set was a Random Forest.
 
 
 ### Getting Data
 
-We'll begin with the usual package loading. Some remarks about the packages.  plyr was needed in some models, and plyr needs to be loaded before DPLYR or may cause problems. I didn't needed DMwR with this dataset. But the KNNImputation function is pretty important to have it present specially when the data has NAs values and we are looking to replace them.
+We'll begin with the usual package loading. Some remarks about the packages.  plyr was needed in some models, and plyr needs to be loaded before DPLYR or may cause problems. I didn't needed DMwR with this data set. But the KNNImputation function is pretty important to have it present specially when the data has NAs values and we are looking to replace them.
 
 ```{r package loading, echo=TRUE}
 library(caret)
@@ -25,7 +28,7 @@ library(DMwR)
 library(rattle)
 ```
 
-Loading the files had a couple of tricks. To begin with there were many diferent NA arguments.  Also the variable classes between the training file and the testing file didn't match.  That was because some columns in the training file had mostly NA values but also some numbers. The testing file on the other hand those columns had only NA values, so R gave them the class of "Logic".
+Loading the files had a couple of tricks. To begin with there were many different NA arguments.  Also the variable classes between the training file and the testing file didn't match.  That was because some columns in the training file had mostly NA values but also some numbers. The testing file on the other hand those columns had only NA values, so R gave them the class of "Logic".
 ```{r data loading, echo=TRUE}
 trainingURL<- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 filename1 <- "training_machine.csv"
@@ -43,19 +46,19 @@ testing[] <- mapply(FUN = as,testing,sapply(training,class),SIMPLIFY = FALSE)
 
 ### Cleaing the Data
 
-I did the data cleaning on steps.  First I removed all the columns that were completely filled with NA values.  Then I noticed that some columns had less than 10% Data, I tried to run the KNNImputation function, but didn't worked with so many missing values, so I had to remove this colums also.
+I did the data cleaning on steps.  First I removed all the columns that were completely filled with NA values.  Then I noticed that some columns had less than 10% Data, I tried to run the KNNImputation function, but didn't worked with so many missing values, so I had to remove this columns also.
 
-When I tried to run the KNN model, I had problems with the Raw Date variables. I excluded those variables because data values shouldm't been important on this data set prediction nor devoloping a model for future data classification.
+When I tried to run the KNN model, I had problems with the Raw Date variables. I excluded those variables because data values shouldn't been important on this data set prediction nor developing a model for future data classification.
 
 Also for the same reason I also removed all the first variables columns because they didn't had information related to the measures or the sensors.
 
-One particular variable to be removed was the X columns, which is really the index of the dataset. Is evident with the next plot, that the data was already sorted by Classification type.  
+One particular variable to be removed was the X columns, which is really the index of the data set. Is evident with the next plot, that the data was already sorted by Classification type.  
 
 ```{r X vs Classe}
 boxplot( X~factor(classe), data=training, col = "blue")
 ````
 
-Without removing the X column, every dataset with an X value lower than 4500 will give a prediction of A, because of strong correlation between Classificaction vs X  (just because the data was presorted)
+Without removing the X column, every data set with an X value lower than 4500 will give a prediction of A, because of strong correlation between Classification vs X  (just because the data was presorted)
 
 
 ```{r removing NA columns, echo=TRUE}
@@ -69,7 +72,7 @@ training_not_na <- training_not_na %>% select(-(X:num_window))
 
 ### NA values removal
 
-In this case wasn't needed but I found this so useful than prefered to keep the coded. This package and function will replace NA values thru a KNN replacement algorithm.  Most of the time this will be pretty useful.
+In this case wasn't needed but I found this so useful than preferred to keep the coded. This package and function will replace NA values via a KNN replacement algorithm.  Most of the time this will be pretty useful.
 ```{r KNN Imputation, echo=TRUE}
 require(DMwR)
 training_knn<-knnImputation(training_not_na,k=5)
@@ -78,9 +81,9 @@ training_knn<-knnImputation(training_not_na,k=5)
 
 ### Training Data Partition and Train Control Parameters
 
-At first I tried to run the train functions with a large Training dataset (p=0.75). I also ran the train function without changing the trainControl parameters.  It just took too much time! Random Forest ran for 14 hours.
+At first I tried to run the train functions with a large Training data set (p=0.75). I also ran the train function without changing the trainControl parameters.  It just took too much time! Random Forest ran for 14 hours.
 
-I decided to sacrify accuracy for speed, so I choose a smaller training dataset (p=40%), also change the trainControl parameters, the time dropped from 14 hours to 15 minutes!
+I decided to sacrify accuracy for speed, so I choose a smaller training data set (p=40%), also change the trainControl parameters, the time dropped from 14 hours to 15 minutes!
 
 ```{r training-testing sets, echo=TRUE}
 set.seed(1976)
@@ -97,16 +100,16 @@ tControl_RF <- trainControl(method="cv",number=5)
 
 ### Training, Cross Validation and Model Accuracy Grading
 
-OK, so I ran Random Forest, Boosting, KNN, RPart and Bayesian Generalized Linear Models.
+OK, so I ran Random Forest, Boosting, KNN, R Part and Bayesian Generalized Linear Models.
 
-Here are the model results, which include both cross validation with the training dataset (40%) and confussion Matrixes based on the testing dataset (60%). When I talk about testing dataset, I'm talking about the remaining of the training data set that wasn't used with the Train function, not the small 20x160 file downloaded. That file was only used for the part2 submission.
+Here are the model results, which include both cross validation with the training data set (40%) and confusion Matrices based on the testing data set (60%). When I talk about testing data set, I'm talking about the remaining of the training data set that wasn't used with the Train function, not the small 20x160 file downloaded. That file was only used for the part2 submission.
 
 
 #### A. Random Forest
 
-Random Forest was the most accurate model, but also de slowest one. While running modFitRF$finalModel, R runs a confussion matrix on the training data itself, and most of the data fall on the matrix diagonal. 
+Random Forest was the most accurate model, but also the slowest one. While running modFitRF$finalModel, R runs a confusion matrix on the training data itself, and most of the data fall on the matrix diagonal. 
 
-Performing a Cross Validation, with the rest of the Training Values (the Testing dataset), also most of the values fall in the Confussion Matrix Diagonal, and this model cross validation, returned an accuracy of 0.9878.
+Performing a Cross Validation, with the rest of the Training Values (the Testing data set), also most of the values fall in the Confusion Matrix Diagonal, and this model cross validation, returned an accuracy of 0.9878.
 
 This model returned high Sensitivity and Specificity.
 
@@ -126,7 +129,7 @@ predRF_Testing
 
 #### B. Boosting
 
-This was the 2nd best model. Also most of the testing data fell in the Confussion Matrix Diagonal, giving a Cross Validation accuracy of 0.9572.  Was a very good model, specially considering it's speed.  It's a good "bang for your buck" model!
+This was the 2nd best model. Also most of the testing data fell in the Confusion Matrix Diagonal, giving a Cross Validation accuracy of 0.9572.  Was a very good model, specially considering it's speed.  It's a good "bang for your buck" model!
 
 ```{r Boosting, echo=TRUE, cache=TRUE}
 set.seed(100)
@@ -163,9 +166,9 @@ predknn_Testing
 
 #### D. Recursive Partition - RPart
 
-One very important lesson is to run rpart model every time you can. It's not an accurate model but is very easy to plot and undestand what is going on.  For several days I was building the Machine Learning Alogorithm without removing the X column, and every model gave me predicted "A" values on the downloaded testing files.  Ploting the rpart model help me reallize the heavy dependency of the model with the X (index) value.  I'm plotting the corrected tree.
+One very important lesson is to run rpart model every time you can. It's not an accurate model but is very easy to plot and understand what is going on.  For several days I was building the Machine Learning Algorithm without removing the X column, and every model gave me predicted "A" values on the downloaded testing files.  Plotting the rpart model help me realize the heavy dependency of the model with the X (index) value.  I'm plotting the corrected tree.
 
-The cross validation accuracy was just 0.57.  But the importance of this model is not so much it's accuracy but rather te ease of understanding.
+The cross validation accuracy was just 0.57.  But the importance of this model is not so much it's accuracy but rather the ease of understanding.
 
 ```{r rpart, echo=TRUE, cache=TRUE}
 modFitrpart <- train(classe ~. , data=Train_Part, method="rpart", trControl=tControl)
@@ -185,7 +188,7 @@ predrpart_Testing
 
 #### E. Bayeasian Generalized Linear Model
 
-The most interesting thing about this model is that it wasn't able to classify correctly C,D and E values.  It was "ok" with A and B.  Overall, it had a Cross Validation Accuracy of just 0.4004
+The most interesting thing about this model is that it wasn't able to classify correctly C,D and E values.  It was "OK" with A and B.  Overall, it had a Cross Validation Accuracy of just 0.4004
 
 ```{r Bayesian Generalized Linear Model, echo=TRUE, cache=TRUE}
 modFitBAY <- train(classe ~. , data=Train_Part, method="bayesglm", trControl=tControl)
@@ -210,7 +213,7 @@ RPart <-confusionMatrix(predrpart, Test_Part$classe)$overall[1]
 BAY <-confusionMatrix(predBAY, Test_Part$classe)$overall[1]
 ```
 
-Well, you can see the accuracy of the different models, Random Forest was the most accurate one, follow by Boosting method.  Boosting wasn't so accurate, but was definately faster than Random Forest
+Well, you can see the accuracy of the different models, Random Forest was the most accurate one, follow by Boosting method.  Boosting wasn't so accurate, but was definitely faster than Random Forest
 
 ```{r Acurracy summary, echo=TRUE}
 RF
